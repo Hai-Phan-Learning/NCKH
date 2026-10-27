@@ -1,0 +1,43 @@
+-----------------------------------------------------------OPEN ROBOT AND MAP--------------------------------------------------------------------
+export TURTLEBOT3_MODEL=waffle
+ros2 launch turtlebot3_gazebo empty_world.launch.py						// (MAP 1 )
+
+ros2 launch turtlebot3_gazebo turtlebot3_world.launch.py  					// (MAP 2 )
+
+
+ros2 run turtlebot3_teleop teleop_keyboard						//(KEY BOARD DI CHUYỂN ) 
+
+-----------------------------------------------------------TẠO VẬT THỂ THAY ĐỔI--------------------------------------------------------------------
+cd turtlebot3_ws/
+python3 generate_world.py
+-----------------------------------------------------------RUN CÁC NODE--------------------------------------------------------------------
+cd ros2_ws/
+source install/setup.bash
+ros2 run kteam_robot scan_filter                                  		// ( CHẠY LIDAR )
+ros2 run kteam_robot state_node							// ( GỬI 27 STATE )
+ros2 run kteam_robot avoid							// ( TRÁNH VẬT CẢN CHƯA CÓ RL )
+ros2 run kteam_robot ppo_agent							// ( TRÁNH VẬT CẢN CÓ RL ) 
+
+
+ros2 service call /reset_odom std_srvs/srv/Trigger
+
+ros2 launch kteam_robot ppo.launch.py
+
+
+-----------------------------------------------------------SLAM--------------------------------------------------------------------
+ros2 launch slam_toolbox online_async_launch.py
+
+RVIZ2
+B1: Add --> Map
+    Fixed Frame --> Base_scan
+B2: Map-Topic --> /map
+B3: Add --> Laser Scan
+B4: LaserScan-Topic --> /slam_toolbox/visualization
+
+ros2 run nav2_map_server map_saver_cli -f ~/map_SLAM/my_map
+
+-----------------------------------------------------------NAV2--------------------------------------------------------------------
+ros2 launch nav2_bringup bringup_launch.py use_sim_time:=True map:=$HOME/map_SLAM/my_map_AI_1.yaml
+
+Mở rộng:
+ros2 launch nav2_bringup bringup_launch.py use_sim_time:=True map:=$HOME/map_SLAM/my_map_AI_1.yaml params_file:=$HOME/ros2_ws/src/kteam_robot/nav2_params.yaml
